@@ -1,0 +1,39 @@
+const int piezoPin = A0;
+
+float baseline = 0.0;
+float smoothValue = 0.0;
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  long sum = 0;
+  for (int i = 0; i < 500; i++) {
+    sum += analogRead(piezoPin);
+    delay(1);
+  }
+  baseline = sum / 500.0;
+}
+
+void loop() {
+  int peak = 0;
+  unsigned long startMicros = micros();
+
+  while (micros() - startMicros < 2000) {
+    int raw = analogRead(piezoPin);
+
+    baseline = baseline * 0.995 + raw * 0.005;
+
+    float normalized = abs(raw - baseline);
+
+    smoothValue = smoothValue * 0.6 + normalized * 0.4;
+
+    int out = (int)smoothValue;
+
+    if (out > peak) peak = out;
+  }
+
+  if (peak < 2) peak = 0;
+
+  Serial.println(peak);
+}
